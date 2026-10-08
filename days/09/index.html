@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day 9 · Spicy</title>
+<style>
+  :root{
+    --bg:#000;
+    --ink:#f5f5f7;
+    --muted:#86868b;
+    --blue-light:#2997ff;
+    --red:#ff3b30;
+    --orange:#ff9500;
+    --ease:cubic-bezier(.28,0,0,1);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;}
+  body{
+    background:#000;
+    color:var(--ink);
+    font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:30px 16px;
+    transition:background 0.4s var(--ease);
+    overflow:hidden;
+  }
+  nav{
+    position:fixed;
+    top:0; left:0; right:0;
+    z-index:50;
+    height:48px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 20px;
+    background:rgba(0,0,0,0.6);
+    backdrop-filter:blur(20px) saturate(180%);
+    -webkit-backdrop-filter:blur(20px) saturate(180%);
+    border-bottom:1px solid rgba(255,255,255,0.08);
+  }
+  nav a.back{ color:var(--blue-light); text-decoration:none; font-size:0.85rem; font-weight:500; }
+  nav a.back:hover{ text-decoration:underline; }
+  nav .label{ color:var(--muted); font-size:0.8rem; }
+
+  h1{
+    font-size:clamp(1.8rem, 5vw, 2.6rem);
+    font-weight:700;
+    letter-spacing:-0.02em;
+    margin:0 0 8px;
+    background:linear-gradient(180deg, #fff, #a1a1a6);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+  .msg{
+    color:var(--muted);
+    font-size:0.92rem;
+    min-height:24px;
+    margin-bottom:26px;
+  }
+  .pepper{
+    font-size:5rem;
+    cursor:pointer;
+    user-select:none;
+    display:inline-block;
+    filter:drop-shadow(0 0 0px var(--red));
+    transition:transform 0.1s var(--ease), filter 0.2s var(--ease);
+  }
+  .pepper:active{ transform:scale(0.85); }
+  .meter{
+    width:260px;
+    height:10px;
+    background:rgba(255,255,255,0.1);
+    border-radius:999px;
+    margin-top:26px;
+    overflow:hidden;
+  }
+  .meter-fill{
+    height:100%;
+    width:0%;
+    background:linear-gradient(90deg, var(--orange), var(--red));
+    transition:width 0.4s var(--ease);
+  }
+  .tag{
+    display:inline-block;
+    margin-top:22px;
+    font-size:0.78rem;
+    font-weight:600;
+    color:#fff;
+    background:var(--red);
+    padding:8px 18px;
+    border-radius:999px;
+  }
+  @keyframes shake{
+    0%,100%{ transform:translate(0,0); }
+    25%{ transform:translate(-4px,2px); }
+    50%{ transform:translate(4px,-2px); }
+    75%{ transform:translate(-3px,-3px); }
+  }
+  body.max{ animation:shake 0.3s infinite; }
+</style>
+</head>
+<body id="body">
+<nav>
+  <a class="back" href="../../">‹ Weird October</a>
+  <span class="label">Day 9 · Spicy</span>
+</nav>
+<h1>How spicy can you take it?</h1>
+<div class="msg" id="msg">Tap the pepper.</div>
+<div class="pepper" id="pepper">🌶️</div>
+<div class="meter"><div class="meter-fill" id="fill"></div></div>
+<span class="tag">Day 9 · Spicy</span>
+
+<script>
+  var pepper = document.getElementById('pepper');
+  var fill = document.getElementById('fill');
+  var msg = document.getElementById('msg');
+  var body = document.getElementById('body');
+
+  var levels = [
+    { pct: 10,  text: "Mild. Barely a tingle.", bg: "#000" },
+    { pct: 25,  text: "Okay, warming up.", bg: "#0e0505" },
+    { pct: 40,  text: "That's a real kick now.", bg: "#1a0605" },
+    { pct: 55,  text: "Forehead sweat incoming.", bg: "#260705" },
+    { pct: 70,  text: "Why are you still tapping.", bg: "#330805" },
+    { pct: 85,  text: "This is a cry for help.", bg: "#410905" },
+    { pct: 100, text: "MAXIMUM SPICE. THERE IS NO MORE PEPPER.", bg: "#520a04" }
+  ];
+
+  var level = 0;
+
+  pepper.addEventListener('click', function(){
+    if (level >= levels.length - 1) return;
+    level++;
+    var l = levels[level];
+    fill.style.width = l.pct + '%';
+    msg.textContent = l.text;
+    body.style.background = l.bg;
+    pepper.style.filter = 'drop-shadow(0 0 ' + (level * 4) + 'px var(--red))';
+    pepper.style.transform = 'scale(' + (1 + level * 0.08) + ')';
+
+    if (level === levels.length - 1){
+      body.classList.add('max');
+    }
+  });
+</script>
+</body>
+</html>

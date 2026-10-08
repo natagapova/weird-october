@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day 8 · Skeumorphism</title>
+<style>
+  :root{
+    --bg:#000;
+    --ink:#f5f5f7;
+    --muted:#86868b;
+    --blue:#0071e3;
+    --blue-light:#2997ff;
+    --leather:#5a3a2a;
+    --leather-dark:#3e2819;
+    --paper:#fdf6e3;
+    --line:#d8cdb0;
+    --ease:cubic-bezier(.28,0,0,1);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;}
+  body{
+    background:radial-gradient(circle at 50% 0%, #1c1c1e, #000 70%);
+    color:var(--ink);
+    font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding:100px 16px 40px;
+  }
+  nav{
+    position:fixed;
+    top:0; left:0; right:0;
+    z-index:50;
+    height:48px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 20px;
+    background:rgba(0,0,0,0.6);
+    backdrop-filter:blur(20px) saturate(180%);
+    -webkit-backdrop-filter:blur(20px) saturate(180%);
+    border-bottom:1px solid rgba(255,255,255,0.08);
+  }
+  nav a.back{ color:var(--blue-light); text-decoration:none; font-size:0.85rem; font-weight:500; }
+  nav a.back:hover{ text-decoration:underline; }
+  nav .label{ color:var(--muted); font-size:0.8rem; }
+
+  .caption{
+    text-align:center;
+    margin-bottom:28px;
+    max-width:460px;
+  }
+  .caption h1{
+    font-size:clamp(1.8rem, 5vw, 2.4rem);
+    font-weight:700;
+    letter-spacing:-0.02em;
+    margin:0 0 10px;
+    background:linear-gradient(180deg, #fff, #a1a1a6);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+  .caption p{ color:var(--muted); font-size:0.9rem; line-height:1.6; }
+
+  .notebook{
+    width:min(380px, 90vw);
+    border-radius:18px;
+    overflow:hidden;
+    box-shadow:0 30px 70px rgba(0,0,0,0.6);
+    transition:border-radius 0.6s var(--ease);
+  }
+
+  /* --- skeuomorphic (pre-iOS7) state --- */
+  .notebook.skeu{
+    background:var(--leather);
+    padding:18px;
+    background-image:
+      radial-gradient(circle at 20% 15%, rgba(255,255,255,0.08), transparent 40%),
+      repeating-linear-gradient(45deg, rgba(0,0,0,0.04) 0px, rgba(0,0,0,0.04) 1px, transparent 2px, transparent 6px);
+  }
+  .notebook.skeu .bar{
+    background:linear-gradient(180deg, #7a4f36, #5a3a2a);
+    border-radius:8px 8px 0 0;
+    padding:10px 14px;
+    text-align:center;
+    color:#f1e3c8;
+    font-weight:bold;
+    font-size:0.95rem;
+    text-shadow:0 1px 0 rgba(0,0,0,0.5);
+    font-family:Georgia, serif;
+  }
+  .notebook.skeu .paper{
+    background:
+      linear-gradient(var(--paper), var(--paper)),
+      repeating-linear-gradient(to bottom, transparent 0, transparent 27px, var(--line) 28px);
+    background-position:0 6px, 0 0;
+    padding:22px 18px 18px 46px;
+    min-height:220px;
+    position:relative;
+    box-shadow:0 10px 25px rgba(0,0,0,0.4);
+  }
+  .notebook.skeu .paper::before{
+    content:"";
+    position:absolute;
+    left:28px; top:0; bottom:0; width:2px;
+    background:#c0392b; opacity:0.4;
+  }
+  .notebook.skeu .paper p{
+    margin:0 0 27px;
+    font-family:Georgia, serif;
+    color:#2b2420;
+    line-height:28px;
+    font-size:1rem;
+  }
+  .notebook.skeu button{
+    font-family:Georgia, serif;
+    font-weight:bold;
+    font-size:0.85rem;
+    padding:10px 18px;
+    border-radius:10px;
+    border:none;
+    cursor:pointer;
+    background:linear-gradient(180deg, #ffd977, #e8a93a);
+    box-shadow:0 3px 0 #a9771f, 0 6px 10px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.7);
+    color:#5a3a16;
+    display:block;
+    margin:14px auto 0;
+  }
+
+  /* --- flat / iOS 7+ state --- */
+  .notebook.flat{
+    background:#fff;
+  }
+  .notebook.flat .bar{
+    background:#fff;
+    color:#000;
+    padding:14px;
+    text-align:center;
+    font-weight:600;
+    font-size:0.95rem;
+    border-bottom:1px solid #e5e5e5;
+  }
+  .notebook.flat .paper{
+    background:#fff;
+    padding:18px;
+    min-height:220px;
+  }
+  .notebook.flat .paper p{
+    margin:0 0 16px;
+    color:#1d1d1f;
+    line-height:1.5;
+    font-size:0.95rem;
+    padding-bottom:14px;
+    border-bottom:1px solid #f0f0f0;
+  }
+  .notebook.flat button{
+    font-weight:600;
+    font-size:0.85rem;
+    padding:10px 18px;
+    border-radius:999px;
+    border:none;
+    cursor:pointer;
+    background:var(--blue);
+    color:#fff;
+    display:block;
+    margin:14px auto 0;
+  }
+
+  .tag{
+    display:block;
+    margin:22px auto 0;
+    width:fit-content;
+    font-size:0.78rem;
+    font-weight:600;
+    color:#fff;
+    background:var(--blue);
+    padding:8px 18px;
+    border-radius:999px;
+  }
+</style>
+</head>
+<body>
+<nav>
+  <a class="back" href="../../">‹ Weird October</a>
+  <span class="label">Day 8 · Skeumorphism</span>
+</nav>
+
+<div class="caption">
+  <h1>Notes, before and after.</h1>
+  <p>This is what Apple's own Notes app looked like before iOS 7 — leather, stitching, paper texture. Tap the button to update it.</p>
+</div>
+
+<div class="notebook skeu" id="notebook">
+  <div class="bar">Notes</div>
+  <div class="paper" id="paper">
+    <p>tap the button to update.</p>
+  </div>
+  <button id="updateBtn">Update to iOS 7 →</button>
+</div>
+<span class="tag">Day 8 · Skeumorphism</span>
+
+<script>
+  var notebook = document.getElementById('notebook');
+  var paper = document.getElementById('paper');
+  var btn = document.getElementById('updateBtn');
+  var updated = false;
+
+  btn.addEventListener('click', function(){
+    if (updated) return;
+    updated = true;
+    notebook.classList.remove('skeu');
+    notebook.classList.add('flat');
+    paper.innerHTML = '';
+
+    var lines = [
+      "flat design. no gloss, no stitching.",
+      "just typography, color, and whitespace.",
+      "this is the design language Apple shipped from iOS 7 onward."
+    ];
+    lines.forEach(function(text, i){
+      setTimeout(function(){
+        var p = document.createElement('p');
+        p.textContent = text;
+        p.style.opacity = '0';
+        paper.appendChild(p);
+        p.animate([{opacity:0, transform:'translateY(8px)'},{opacity:1, transform:'translateY(0)'}], {duration:400, fill:'forwards', easing:'ease-out'});
+      }, i * 250);
+    });
+
+    btn.remove();
+  });
+</script>
+</body>
+</html>

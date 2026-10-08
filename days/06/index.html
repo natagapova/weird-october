@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day 6 · Analog</title>
+<style>
+  :root{
+    --bg:#000;
+    --ink:#f5f5f7;
+    --muted:#86868b;
+    --blue:#0071e3;
+    --blue-light:#2997ff;
+    --red:#ff3b30;
+    --ease:cubic-bezier(.28,0,0,1);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;}
+  body{
+    background:radial-gradient(circle at 50% 40%, #111, #000 70%);
+    color:var(--ink);
+    font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    overflow:hidden;
+  }
+  nav{
+    position:fixed;
+    top:0; left:0; right:0;
+    z-index:50;
+    height:48px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 20px;
+    background:rgba(0,0,0,0.6);
+    backdrop-filter:blur(20px) saturate(180%);
+    -webkit-backdrop-filter:blur(20px) saturate(180%);
+    border-bottom:1px solid rgba(255,255,255,0.08);
+  }
+  nav a.back{ color:var(--blue-light); text-decoration:none; font-size:0.85rem; font-weight:500; }
+  nav a.back:hover{ text-decoration:underline; }
+  nav .label{ color:var(--muted); font-size:0.8rem; }
+
+  .clock{
+    position:relative;
+    width:280px;
+    height:280px;
+    border-radius:50%;
+    background:#0a0a0c;
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.08),
+      0 0 0 10px #050506,
+      inset 0 0 40px rgba(0,0,0,0.6),
+      0 20px 60px rgba(0,0,0,0.6);
+  }
+  .tick{
+    position:absolute;
+    width:2px;
+    height:10px;
+    background:rgba(255,255,255,0.35);
+    left:50%;
+    top:8px;
+    transform-origin:1px 132px;
+  }
+  .tick.major{ height:16px; width:3px; background:#fff; opacity:0.85; }
+  .hand{
+    position:absolute;
+    left:50%;
+    bottom:50%;
+    transform-origin:bottom center;
+    border-radius:6px;
+  }
+  .hour{ width:6px; height:72px; margin-left:-3px; background:#fff; }
+  .minute{ width:4px; height:102px; margin-left:-2px; background:#fff; }
+  .second{ width:2px; height:116px; margin-left:-1px; background:var(--red); }
+  .pin{
+    position:absolute;
+    width:10px; height:10px;
+    left:50%; top:50%;
+    margin:-5px;
+    border-radius:50%;
+    background:var(--red);
+    z-index:2;
+  }
+  .caption{
+    margin-top:36px;
+    text-align:center;
+    position:relative;
+    z-index:7;
+    max-width:420px;
+    padding:0 20px;
+  }
+  .caption h1{
+    font-size:clamp(1.8rem, 5vw, 2.6rem);
+    font-weight:700;
+    letter-spacing:-0.02em;
+    margin:0 0 10px;
+    background:linear-gradient(180deg, #fff, #a1a1a6);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+  .caption p{ color:var(--muted); font-size:0.92rem; line-height:1.6; }
+  .tag{
+    display:inline-block;
+    margin-top:16px;
+    font-size:0.78rem;
+    font-weight:600;
+    color:#fff;
+    background:var(--blue);
+    padding:8px 18px;
+    border-radius:999px;
+  }
+</style>
+</head>
+<body>
+<nav>
+  <a class="back" href="../../">‹ Weird October</a>
+  <span class="label">Day 6 · Analog</span>
+</nav>
+
+<div class="clock" id="clock">
+  <div class="hand hour" id="hourHand"></div>
+  <div class="hand minute" id="minuteHand"></div>
+  <div class="hand second" id="secondHand"></div>
+  <div class="pin"></div>
+</div>
+
+<div class="caption">
+  <h1>Real time, no digits.</h1>
+  <p>This clock is actually running — it's showing the real time, right now, the slow analog way.</p>
+  <span class="tag">Day 6 · Analog</span>
+</div>
+
+<script>
+  var clock = document.getElementById('clock');
+  for (var i = 0; i < 60; i++){
+    var t = document.createElement('div');
+    t.className = 'tick' + (i % 5 === 0 ? ' major' : '');
+    t.style.transform = 'rotate(' + (i * 6) + 'deg)';
+    clock.appendChild(t);
+  }
+
+  var hourHand = document.getElementById('hourHand');
+  var minuteHand = document.getElementById('minuteHand');
+  var secondHand = document.getElementById('secondHand');
+
+  function tick(){
+    var now = new Date();
+    var h = now.getHours() % 12;
+    var m = now.getMinutes();
+    var s = now.getSeconds();
+
+    var secDeg = s * 6;
+    var minDeg = m * 6 + s * 0.1;
+    var hourDeg = h * 30 + m * 0.5;
+
+    secondHand.style.transform = 'rotate(' + secDeg + 'deg)';
+    minuteHand.style.transform = 'rotate(' + minDeg + 'deg)';
+    hourHand.style.transform = 'rotate(' + hourDeg + 'deg)';
+
+    requestAnimationFrame(tick);
+  }
+  tick();
+</script>
+</body>
+</html>
