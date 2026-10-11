@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day 11 · Stuck</title>
+<style>
+  :root{
+    --bg:#000;
+    --ink:#f5f5f7;
+    --muted:#86868b;
+    --blue:#0071e3;
+    --blue-light:#2997ff;
+    --red:#ff3b30;
+    --ease:cubic-bezier(.28,0,0,1);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;}
+  body{
+    background:radial-gradient(circle at 50% 30%, #1c1c1e, #000 70%);
+    color:var(--ink);
+    font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+    user-select:none;
+  }
+  nav{
+    position:fixed;
+    top:0; left:0; right:0;
+    z-index:50;
+    height:48px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 20px;
+    background:rgba(0,0,0,0.6);
+    backdrop-filter:blur(20px) saturate(180%);
+    -webkit-backdrop-filter:blur(20px) saturate(180%);
+    border-bottom:1px solid rgba(255,255,255,0.08);
+  }
+  nav a.back{ color:var(--blue-light); text-decoration:none; font-size:0.85rem; font-weight:500; }
+  nav a.back:hover{ text-decoration:underline; }
+  nav .label{ color:var(--muted); font-size:0.8rem; }
+
+  .caption{
+    text-align:center;
+    margin-bottom:40px;
+    max-width:440px;
+    padding:0 20px;
+  }
+  .caption h1{
+    font-size:clamp(1.8rem, 5vw, 2.6rem);
+    font-weight:700;
+    letter-spacing:-0.02em;
+    margin:0 0 10px;
+    background:linear-gradient(180deg, #fff, #a1a1a6);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+  .caption p{ color:var(--muted); font-size:0.92rem; line-height:1.6; }
+
+  .dock{
+    position:relative;
+    width:280px;
+    height:120px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .icon{
+    width:76px;
+    height:76px;
+    border-radius:18px;
+    background:linear-gradient(145deg, var(--blue-light), var(--blue));
+    box-shadow:0 10px 30px rgba(0,113,227,0.4), inset 0 1px 1px rgba(255,255,255,0.4);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:2rem;
+    cursor:grab;
+    touch-action:none;
+    transition:transform 0.5s cubic-bezier(.34,1.8,.64,1);
+  }
+  .icon.dragging{
+    cursor:grabbing;
+    transition:none;
+  }
+  .icon.shake{
+    animation:wiggle 0.4s ease-in-out;
+  }
+  @keyframes wiggle{
+    0%,100%{ transform:rotate(0deg) translate(0,0); }
+    20%{ transform:rotate(-6deg) translate(-2px,0); }
+    40%{ transform:rotate(6deg) translate(2px,0); }
+    60%{ transform:rotate(-4deg) translate(-1px,0); }
+    80%{ transform:rotate(4deg) translate(1px,0); }
+  }
+  .msg{
+    margin-top:30px;
+    font-size:0.85rem;
+    color:var(--muted);
+    min-height:20px;
+  }
+  .tag{
+    display:inline-block;
+    margin-top:14px;
+    font-size:0.78rem;
+    font-weight:600;
+    color:#fff;
+    background:var(--blue);
+    padding:8px 18px;
+    border-radius:999px;
+  }
+</style>
+</head>
+<body>
+<nav>
+  <a class="back" href="../../">‹ Weird October</a>
+  <span class="label">Day 11 · Stuck</span>
+</nav>
+
+<div class="caption">
+  <h1>Try to move it.</h1>
+  <p>Drag the icon anywhere you want. It always finds its way back.</p>
+</div>
+
+<div class="dock">
+  <div class="icon" id="icon">✦</div>
+</div>
+<div class="msg" id="msg">&nbsp;</div>
+<span class="tag">Day 11 · Stuck</span>
+
+<script>
+  var icon = document.getElementById('icon');
+  var msg = document.getElementById('msg');
+
+  var messages = [
+    "nope.",
+    "it really doesn't want to go.",
+    "some things just don't move.",
+    "you can keep trying.",
+    "still stuck.",
+    "it's not you, it's the icon."
+  ];
+  var tries = 0;
+
+  var dragging = false;
+  var startX, startY;
+
+  function pointerDown(e){
+    dragging = true;
+    icon.classList.add('dragging');
+    var p = e.touches ? e.touches[0] : e;
+    startX = p.clientX;
+    startY = p.clientY;
+  }
+  function pointerMove(e){
+    if (!dragging) return;
+    var p = e.touches ? e.touches[0] : e;
+    var dx = p.clientX - startX;
+    var dy = p.clientY - startY;
+    icon.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
+  }
+  function pointerUp(){
+    if (!dragging) return;
+    dragging = false;
+    icon.classList.remove('dragging');
+    icon.classList.remove('shake');
+    icon.style.transform = 'translate(0,0)';
+    msg.textContent = messages[tries % messages.length];
+    tries++;
+
+    icon.addEventListener('transitionend', function once(e){
+      if (e.propertyName !== 'transform') return;
+      icon.removeEventListener('transitionend', once);
+      icon.classList.add('shake');
+    });
+  }
+
+  icon.addEventListener('mousedown', pointerDown);
+  window.addEventListener('mousemove', pointerMove);
+  window.addEventListener('mouseup', pointerUp);
+  icon.addEventListener('touchstart', pointerDown);
+  window.addEventListener('touchmove', pointerMove);
+  window.addEventListener('touchend', pointerUp);
+</script>
+</body>
+</html>

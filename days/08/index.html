@@ -74,7 +74,7 @@
     transition:border-radius 0.6s var(--ease);
   }
 
-  /* --- skeuomorphic (pre-iOS7) state --- */
+  /* --- skeuomorphic state --- */
   .notebook.skeu{
     background:var(--leather);
     padding:18px;
@@ -131,7 +131,7 @@
     margin:14px auto 0;
   }
 
-  /* --- flat / iOS 7+ state --- */
+  /* --- flat state --- */
   .notebook.flat{
     background:#fff;
   }
@@ -190,8 +190,8 @@
 </nav>
 
 <div class="caption">
-  <h1>Notes, before and after.</h1>
-  <p>This is what Apple's own Notes app looked like before iOS 7 — leather, stitching, paper texture. Tap the button to update it.</p>
+  <h1>An app, before and after.</h1>
+  <p>Leather, stitching, paper texture — this is how software used to pretend to be real objects. Tap the button to update it.</p>
 </div>
 
 <div class="notebook skeu" id="notebook">
@@ -199,7 +199,7 @@
   <div class="paper" id="paper">
     <p>tap the button to update.</p>
   </div>
-  <button id="updateBtn">Update to iOS 7 →</button>
+  <button id="updateBtn">Update →</button>
 </div>
 <span class="tag">Day 8 · Skeumorphism</span>
 
@@ -219,7 +219,7 @@
     var lines = [
       "flat design. no gloss, no stitching.",
       "just typography, color, and whitespace.",
-      "this is the design language Apple shipped from iOS 7 onward."
+      "an entire design era, undone in one tap."
     ];
     lines.forEach(function(text, i){
       setTimeout(function(){
