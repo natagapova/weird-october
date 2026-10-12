@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day 13 · Scratch</title>
+<style>
+  :root{
+    --bg:#000;
+    --ink:#f5f5f7;
+    --muted:#86868b;
+    --blue:#0071e3;
+    --blue-light:#2997ff;
+    --ease:cubic-bezier(.28,0,0,1);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;}
+  body{
+    background:radial-gradient(circle at 50% 20%, #12213a, #000 70%);
+    color:var(--ink);
+    font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+    user-select:none;
+  }
+  nav{
+    position:fixed;
+    top:0; left:0; right:0;
+    z-index:50;
+    height:48px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 20px;
+    background:rgba(0,0,0,0.6);
+    backdrop-filter:blur(20px) saturate(180%);
+    -webkit-backdrop-filter:blur(20px) saturate(180%);
+    border-bottom:1px solid rgba(255,255,255,0.08);
+  }
+  nav a.back{ color:var(--blue-light); text-decoration:none; font-size:0.85rem; font-weight:500; }
+  nav a.back:hover{ text-decoration:underline; }
+  nav .label{ color:var(--muted); font-size:0.8rem; }
+
+  .caption{
+    text-align:center;
+    margin-bottom:28px;
+    max-width:440px;
+    padding:0 20px;
+  }
+  .caption h1{
+    font-size:clamp(1.8rem, 5vw, 2.6rem);
+    font-weight:700;
+    letter-spacing:-0.02em;
+    margin:0 0 10px;
+    background:linear-gradient(180deg, #fff, #a1a1a6);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+  .caption p{ color:var(--muted); font-size:0.92rem; line-height:1.6; }
+
+  .card{
+    position:relative;
+    width:320px;
+    height:200px;
+    border-radius:20px;
+    overflow:hidden;
+    box-shadow:0 20px 50px rgba(0,0,0,0.5);
+  }
+  .prize{
+    position:absolute;
+    inset:0;
+    background:rgba(255,255,255,0.08);
+    backdrop-filter:blur(18px) saturate(180%);
+    -webkit-backdrop-filter:blur(18px) saturate(180%);
+    border:1px solid rgba(255,255,255,0.15);
+    border-radius:20px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:20px;
+  }
+  .prize .big{
+    font-size:1.3rem;
+    font-weight:700;
+    letter-spacing:-0.01em;
+    margin-bottom:6px;
+    background:linear-gradient(180deg, #fff, #a1a1a6);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+  .prize .small{
+    color:var(--muted);
+    font-size:0.8rem;
+  }
+  canvas{
+    position:absolute;
+    inset:0;
+    cursor:grab;
+    touch-action:none;
+  }
+  canvas.dragging{ cursor:grabbing; }
+
+  .status{
+    margin-top:24px;
+    font-size:0.82rem;
+    color:var(--muted);
+    font-weight:500;
+  }
+  .tag{
+    display:inline-block;
+    margin-top:14px;
+    font-size:0.78rem;
+    font-weight:600;
+    color:#fff;
+    background:var(--blue);
+    padding:8px 18px;
+    border-radius:999px;
+  }
+</style>
+</head>
+<body>
+<nav>
+  <a class="back" href="../../">‹ Weird October</a>
+  <span class="label">Day 13 · Scratch</span>
+</nav>
+
+<div class="caption">
+  <h1>Scratch it off.</h1>
+  <p>Drag across the card to reveal what's underneath. Use your cursor like a coin.</p>
+</div>
+
+<div class="card">
+  <div class="prize">
+    <div class="big">You already won.</div>
+    <div class="small">Nothing to claim — just thirteen days into October.</div>
+  </div>
+  <canvas id="scratch"></canvas>
+</div>
+<div class="status" id="status">0% scratched</div>
+<span class="tag">Day 13 · Scratch</span>
+
+<script>
+  var canvas = document.getElementById('scratch');
+  var ctx = canvas.getContext('2d');
+  var card = document.querySelector('.card');
+  var status = document.getElementById('status');
+  var rect = card.getBoundingClientRect();
+  var W = canvas.width = rect.width;
+  var H = canvas.height = rect.height;
+
+  var r = 20; // scratch radius
+  var grad = ctx.createLinearGradient(0, 0, W, H);
+  grad.addColorStop(0, '#9a9a9f');
+  grad.addColorStop(0.5, '#d1d1d6');
+  grad.addColorStop(1, '#8a8a8f');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.font = '600 13px -apple-system, sans-serif';
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.textAlign = 'center';
+  ctx.fillText('scratch here', W / 2, H / 2);
+
+  var dragging = false;
+  var checked = false;
+
+  function scratchAt(x, y){
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function getPos(e){
+    var rect = canvas.getBoundingClientRect();
+    var p = e.touches ? e.touches[0] : e;
+    return { x: p.clientX - rect.left, y: p.clientY - rect.top };
+  }
+
+  function checkProgress(){
+    if (checked) return;
+    var data = ctx.getImageData(0, 0, W, H).data;
+    var cleared = 0;
+    var total = data.length / 4;
+    for (var i = 3; i < data.length; i += 4 * 17){
+      if (data[i] === 0) cleared++;
+    }
+    var sampled = Math.ceil(total / 17);
+    var pct = Math.round((cleared / sampled) * 100);
+    status.textContent = pct + '% scratched';
+    if (pct > 65){
+      checked = true;
+      canvas.style.transition = 'opacity 0.6s var(--ease)';
+      canvas.style.opacity = '0';
+      canvas.style.pointerEvents = 'none';
+      status.textContent = 'fully revealed';
+    }
+  }
+
+  function start(e){
+    dragging = true;
+    canvas.classList.add('dragging');
+    var p = getPos(e);
+    scratchAt(p.x, p.y);
+  }
+  function move(e){
+    if (!dragging) return;
+    var p = getPos(e);
+    scratchAt(p.x, p.y);
+    checkProgress();
+  }
+  function end(){
+    dragging = false;
+    canvas.classList.remove('dragging');
+    checkProgress();
+  }
+
+  canvas.addEventListener('mousedown', start);
+  window.addEventListener('mousemove', move);
+  window.addEventListener('mouseup', end);
+  canvas.addEventListener('touchstart', start);
+  window.addEventListener('touchmove', move);
+  window.addEventListener('touchend', end);
+</script>
+</body>
+</html>
