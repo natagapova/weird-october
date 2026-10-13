@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day 14 · Origami</title>
+<style>
+  :root{
+    --bg:#000;
+    --ink:#f5f5f7;
+    --muted:#86868b;
+    --blue:#0071e3;
+    --blue-light:#2997ff;
+    --ease:cubic-bezier(.28,0,0,1);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;}
+  body{
+    background:radial-gradient(circle at 50% 20%, #14151c, #000 70%);
+    color:var(--ink);
+    font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+    user-select:none;
+  }
+  nav{
+    position:fixed;
+    top:0; left:0; right:0;
+    z-index:50;
+    height:48px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 20px;
+    background:rgba(0,0,0,0.6);
+    backdrop-filter:blur(20px) saturate(180%);
+    -webkit-backdrop-filter:blur(20px) saturate(180%);
+    border-bottom:1px solid rgba(255,255,255,0.08);
+  }
+  nav a.back{ color:var(--blue-light); text-decoration:none; font-size:0.85rem; font-weight:500; }
+  nav a.back:hover{ text-decoration:underline; }
+  nav .label{ color:var(--muted); font-size:0.8rem; }
+
+  .caption{
+    text-align:center;
+    margin-bottom:22px;
+    max-width:460px;
+    padding:0 20px;
+  }
+  .caption h1{
+    font-size:clamp(1.8rem, 5vw, 2.6rem);
+    font-weight:700;
+    letter-spacing:-0.02em;
+    margin:0 0 10px;
+    background:linear-gradient(180deg, #fff, #a1a1a6);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+  .caption p{ color:var(--muted); font-size:0.92rem; line-height:1.6; }
+
+  canvas{
+    touch-action:none;
+    cursor:grab;
+    filter:drop-shadow(0 20px 40px rgba(0,0,0,0.5));
+  }
+  canvas.dragging{ cursor:grabbing; }
+
+  .msg{
+    margin-top:22px;
+    font-size:0.85rem;
+    color:var(--muted);
+    text-align:center;
+    max-width:380px;
+    min-height:20px;
+    padding:0 20px;
+  }
+  .tag{
+    display:inline-block;
+    margin-top:10px;
+    font-size:0.78rem;
+    font-weight:600;
+    color:#fff;
+    background:var(--blue);
+    padding:8px 18px;
+    border-radius:999px;
+  }
+  .reset{
+    margin-top:14px;
+    font-size:0.78rem;
+    color:var(--blue-light);
+    background:none;
+    border:none;
+    cursor:pointer;
+    font-family:inherit;
+  }
+  .reset:hover{ text-decoration:underline; }
+</style>
+</head>
+<body>
+<nav>
+  <a class="back" href="../../">‹ Weird October</a>
+  <span class="label">Day 14 · Origami</span>
+</nav>
+
+<div class="caption">
+  <h1>A real piece of paper.</h1>
+  <p>Click and drag anywhere. The paper folds along the line between where you grabbed it and where you drag to — just like real paper. Fold it however you want, as many times as you want.</p>
+</div>
+
+<canvas id="sheet" width="320" height="320"></canvas>
+<div class="msg" id="msg">0 folds</div>
+<button class="reset" id="resetBtn">reset the paper</button>
+<span class="tag">Day 14 · Origami</span>
+
+<script>
+  var canvas = document.getElementById('sheet');
+  var ctx = canvas.getContext('2d');
+  var msg = document.getElementById('msg');
+  var CW = canvas.width, CH = canvas.height;
+  var MARGIN = 40;
+
+  var layers;      // array of {pts:[{x,y},...], shade:number}
+  var folds = 0;
+  var dragging = false;
+  var anchor = null;     // {x,y} fixed grab point, in canvas space
+  var cursor = null;     // {x,y} live pointer, in canvas space
+
+  function freshSquare(){
+    var s = CW - MARGIN * 2;
+    return [
+      { x: MARGIN,     y: MARGIN },
+      { x: MARGIN + s, y: MARGIN },
+      { x: MARGIN + s, y: MARGIN + s },
+      { x: MARGIN,     y: MARGIN + s }
+    ];
+  }
+
+  function reset(){
+    layers = [{ pts: freshSquare(), shade: 0 }];
+    folds = 0;
+    msg.textContent = '0 folds';
+    draw();
+  }
+
+  // ---- geometry helpers ----
+  function sub(a,b){ return { x:a.x-b.x, y:a.y-b.y }; }
+  function dot(a,b){ return a.x*b.x + a.y*b.y; }
+  function len(a){ return Math.sqrt(a.x*a.x + a.y*a.y); }
+  function norm(a){ var l = len(a) || 1; return { x:a.x/l, y:a.y/l }; }
+  function mid(a,b){ return { x:(a.x+b.x)/2, y:(a.y+b.y)/2 }; }
+
+  // reflect point p across the line through L0 with unit normal n
+  function reflect(p, L0, n){
+    var d = dot(sub(p, L0), n);
+    return { x: p.x - 2*d*n.x, y: p.y - 2*d*n.y };
+  }
+
+  // Sutherland-Hodgman: clip polygon to half-plane { p : dot(p-L0,n)*side >= 0 }
+  function clipHalf(points, L0, n, side){
+    if (points.length === 0) return [];
+    var out = [];
+    for (var i = 0; i < points.length; i++){
+      var curr = points[i];
+      var next = points[(i+1) % points.length];
+      var dCurr = dot(sub(curr, L0), n) * side;
+      var dNext = dot(sub(next, L0), n) * side;
+      var currIn = dCurr >= -1e-6;
+      var nextIn = dNext >= -1e-6;
+      if (currIn) out.push(curr);
+      if (currIn !== nextIn){
+        var t = dCurr / (dCurr - dNext);
+        out.push({ x: curr.x + t*(next.x-curr.x), y: curr.y + t*(next.y-curr.y) });
+      }
+    }
+    return out;
+  }
+
+  // split every layer by the bisector of (A,B); returns { kept: [...], flapped: [...] }
+  function foldLayers(sourceLayers, A, B){
+    var M = mid(A, B);
+    var n = norm(sub(B, A)); // normal of the bisector line = direction A->B
+    var kept = [];
+    var flapped = [];
+    sourceLayers.forEach(function(layer){
+      var otherSide = clipHalf(layer.pts, M, n, 1);   // side closer to B / cursor
+      var anchorSide = clipHalf(layer.pts, M, n, -1); // side closer to A / anchor
+      if (otherSide.length >= 3) kept.push({ pts: otherSide, shade: layer.shade });
+      if (anchorSide.length >= 3){
+        var reflected = anchorSide.map(function(p){ return reflect(p, M, n); });
+        flapped.push({ pts: reflected, shade: layer.shade + 1 });
+      }
+    });
+    return { kept: kept, flapped: flapped };
+  }
+
+  function draw(){
+    ctx.clearRect(0, 0, CW, CH);
+
+    var renderLayers = layers;
+    if (dragging && anchor && cursor && len(sub(cursor, anchor)) > 4){
+      var result = foldLayers(layers, anchor, cursor);
+      renderLayers = result.kept.concat(result.flapped);
+    }
+
+    renderLayers.forEach(function(layer){
+      var pts = layer.pts;
+      if (pts.length < 3) return;
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, pts[0].y);
+      for (var i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+      ctx.closePath();
+      var lightness = Math.max(70, 96 - layer.shade * 6);
+      ctx.fillStyle = 'hsl(220, 8%, ' + lightness + '%)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(0,0,0,0.28)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    });
+  }
+
+  function toLocal(e){
+    var rect = canvas.getBoundingClientRect();
+    var p = e.touches ? e.touches[0] : e;
+    return {
+      x: (p.clientX - rect.left) * (CW / rect.width),
+      y: (p.clientY - rect.top) * (CH / rect.height)
+    };
+  }
+
+  function pointerDown(e){
+    anchor = toLocal(e);
+    cursor = anchor;
+    dragging = true;
+    canvas.classList.add('dragging');
+    draw();
+  }
+  function pointerMove(e){
+    if (!dragging) return;
+    cursor = toLocal(e);
+    draw();
+  }
+  function pointerUp(){
+    if (!dragging) return;
+    dragging = false;
+    canvas.classList.remove('dragging');
+    if (anchor && cursor && len(sub(cursor, anchor)) > 4){
+      var result = foldLayers(layers, anchor, cursor);
+      if (result.flapped.length){
+        layers = result.kept.concat(result.flapped);
+        folds++;
+        msg.textContent = folds + (folds === 1 ? ' fold' : ' folds') +
+          (folds === 7 ? ' — in real life you’d be stuck here. good thing this isn’t real paper.' : '');
+      }
+    }
+    anchor = null;
+    cursor = null;
+    draw();
+  }
+
+  canvas.addEventListener('mousedown', pointerDown);
+  window.addEventListener('mousemove', pointerMove);
+  window.addEventListener('mouseup', pointerUp);
+  canvas.addEventListener('touchstart', pointerDown);
+  window.addEventListener('touchmove', pointerMove);
+  window.addEventListener('touchend', pointerUp);
+  document.getElementById('resetBtn').addEventListener('click', reset);
+
+  reset();
+</script>
+</body>
+</html>

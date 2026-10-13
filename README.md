@@ -29,7 +29,7 @@ challenge to make one small, weird website per day.
 | 11  | Stuck         | ✅ |
 | 12  | Pointy        | ✅ |
 | 13  | Scratch       | ✅ |
-| 14  | Origami       | ⬜ |
+| 14  | Origami       | ✅ |
 | 15  | Wooden        | ⬜ |
 | 16  | Instant       | ⬜ |
 | 17  | Branching     | ⬜ |
