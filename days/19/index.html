@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day 19 · Distorted</title>
+<style>
+  :root{
+    --bg:#000;
+    --ink:#f5f5f7;
+    --muted:#86868b;
+    --blue:#0071e3;
+    --blue-light:#2997ff;
+    --ease:cubic-bezier(.28,0,0,1);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;}
+  body{
+    background:radial-gradient(circle at 50% 30%, #101522, #000 70%);
+    color:var(--ink);
+    font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    height:100vh;
+    overflow:hidden;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+  }
+  nav{
+    position:fixed;
+    top:0; left:0; right:0;
+    z-index:50;
+    height:48px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 20px;
+    background:rgba(0,0,0,0.6);
+    backdrop-filter:blur(20px) saturate(180%);
+    -webkit-backdrop-filter:blur(20px) saturate(180%);
+    border-bottom:1px solid rgba(255,255,255,0.08);
+  }
+  nav a.back{ color:var(--blue-light); text-decoration:none; font-size:0.85rem; font-weight:500; }
+  nav a.back:hover{ text-decoration:underline; }
+  nav .label{ color:var(--muted); font-size:0.8rem; }
+
+  canvas{ position:absolute; inset:0; }
+
+  .caption{
+    position:relative;
+    z-index:2;
+    text-align:center;
+    pointer-events:none;
+    max-width:460px;
+    padding:0 24px;
+  }
+  .caption h1{
+    font-size:clamp(1.8rem, 6vw, 2.8rem);
+    font-weight:700;
+    letter-spacing:-0.02em;
+    margin:0 0 12px;
+    background:linear-gradient(180deg, #fff, #a1a1a6);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+  .caption p{ color:var(--muted); font-size:0.95rem; line-height:1.6; }
+  .tag{
+    display:inline-block;
+    margin-top:18px;
+    font-size:0.78rem;
+    font-weight:600;
+    color:#fff;
+    background:var(--blue);
+    padding:8px 18px;
+    border-radius:999px;
+  }
+</style>
+</head>
+<body>
+<nav>
+  <a class="back" href="../../">‹ Weird October</a>
+  <span class="label">Day 19 · Distorted</span>
+</nav>
+<canvas id="c"></canvas>
+<div class="caption">
+  <h1>Everything bends near you.</h1>
+  <p>Move your cursor across the grid. Nothing here holds its shape when you get close.</p>
+  <span class="tag">Day 19 · Distorted</span>
+</div>
+
+<script>
+  var canvas = document.getElementById('c');
+  var ctx = canvas.getContext('2d');
+  var W, H;
+  var GAP = 26;
+  var RADIUS = 160;
+  var STRENGTH = 46;
+  var points = [];
+  var mouse = { x: -9999, y: -9999 };
+
+  function buildGrid(){
+    points = [];
+    var cols = Math.ceil(W / GAP) + 2;
+    var rows = Math.ceil(H / GAP) + 2;
+    for (var i = 0; i < cols; i++){
+      for (var j = 0; j < rows; j++){
+        points.push({ ox: i * GAP, oy: j * GAP });
+      }
+    }
+  }
+
+  function resize(){
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+    buildGrid();
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  function tick(){
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = 'rgba(41,151,255,0.8)';
+
+    for (var i = 0; i < points.length; i++){
+      var p = points[i];
+      var dx = p.ox - mouse.x;
+      var dy = p.oy - mouse.y;
+      var dist = Math.sqrt(dx*dx + dy*dy);
+      var x = p.ox, y = p.oy;
+      var size = 1.6;
+
+      if (dist < RADIUS){
+        var force = (1 - dist / RADIUS);
+        var push = force * force * STRENGTH;
+        var angle = Math.atan2(dy, dx);
+        x = p.ox + Math.cos(angle) * push;
+        y = p.oy + Math.sin(angle) * push;
+        size = 1.6 + force * 2.5;
+      }
+
+      ctx.beginPath();
+      ctx.arc(x, y, size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    requestAnimationFrame(tick);
+  }
+  tick();
+
+  window.addEventListener('mousemove', function(e){
+    mouse.x = e.clientX;
+    mouse.y = e.clientY;
+  });
+  window.addEventListener('mouseleave', function(){
+    mouse.x = -9999; mouse.y = -9999;
+  });
+  window.addEventListener('touchmove', function(e){
+    var t = e.touches[0];
+    if (t){ mouse.x = t.clientX; mouse.y = t.clientY; }
+  }, { passive:true });
+  window.addEventListener('touchend', function(){
+    mouse.x = -9999; mouse.y = -9999;
+  });
+</script>
+</body>
+</html>

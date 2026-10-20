@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day 17 · Branching</title>
+<style>
+  :root{
+    --bg:#000;
+    --ink:#f5f5f7;
+    --muted:#86868b;
+    --blue:#0071e3;
+    --blue-light:#2997ff;
+    --ease:cubic-bezier(.28,0,0,1);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;}
+  body{
+    background:radial-gradient(circle at 50% 30%, #0a1a2e, #000 70%);
+    color:var(--ink);
+    font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    height:100vh;
+    overflow:hidden;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:crosshair;
+    position:relative;
+  }
+  nav{
+    position:fixed;
+    top:0; left:0; right:0;
+    z-index:50;
+    height:48px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 20px;
+    background:rgba(0,0,0,0.6);
+    backdrop-filter:blur(20px) saturate(180%);
+    -webkit-backdrop-filter:blur(20px) saturate(180%);
+    border-bottom:1px solid rgba(255,255,255,0.08);
+  }
+  nav a.back{ color:var(--blue-light); text-decoration:none; font-size:0.85rem; font-weight:500; }
+  nav a.back:hover{ text-decoration:underline; }
+  nav .label{ color:var(--muted); font-size:0.8rem; }
+
+  canvas{ position:absolute; inset:0; }
+
+  .caption{
+    position:relative;
+    z-index:2;
+    text-align:center;
+    pointer-events:none;
+    max-width:460px;
+    padding:0 24px;
+  }
+  .caption h1{
+    font-size:clamp(1.8rem, 6vw, 2.8rem);
+    font-weight:700;
+    letter-spacing:-0.02em;
+    margin:0 0 12px;
+    background:linear-gradient(180deg, #fff, #a1a1a6);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+  .caption p{ color:var(--muted); font-size:0.95rem; line-height:1.6; }
+  .tag{
+    display:inline-block;
+    margin-top:18px;
+    font-size:0.78rem;
+    font-weight:600;
+    color:#fff;
+    background:var(--blue);
+    padding:8px 18px;
+    border-radius:999px;
+  }
+  .hint{
+    position:absolute;
+    bottom:26px;
+    left:0; right:0;
+    text-align:center;
+    font-size:0.78rem;
+    color:var(--muted);
+    z-index:2;
+    pointer-events:none;
+  }
+  .reset{
+    position:absolute;
+    top:58px;
+    right:16px;
+    z-index:3;
+    font-size:0.75rem;
+    color:var(--blue-light);
+    background:rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.12);
+    padding:6px 14px;
+    border-radius:999px;
+    cursor:pointer;
+    font-family:inherit;
+  }
+  .reset:hover{ background:rgba(0,113,227,0.2); }
+</style>
+</head>
+<body>
+<nav>
+  <a class="back" href="../../">‹ Weird October</a>
+  <span class="label">Day 17 · Branching</span>
+</nav>
+<button class="reset" id="resetBtn">clear</button>
+<canvas id="c"></canvas>
+<div class="caption">
+  <h1>Click to branch.</h1>
+  <p>Every click grows a new structure from that point — one trunk, splitting over and over, never quite the same twice.</p>
+  <span class="tag">Day 17 · Branching</span>
+</div>
+<div class="hint">click anywhere</div>
+
+<script>
+  var canvas = document.getElementById('c');
+  var ctx = canvas.getContext('2d');
+  var W, H;
+  function resize(){
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  function rand(a, b){ return a + Math.random() * (b - a); }
+
+  function drawBranch(x, y, angle, length, depth, alpha){
+    if (depth <= 0 || length < 4) return;
+
+    var x2 = x + Math.cos(angle) * length;
+    var y2 = y + Math.sin(angle) * length;
+
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x2, y2);
+    ctx.lineWidth = Math.max(0.6, depth * 0.55);
+    ctx.strokeStyle = 'rgba(41,151,255,' + alpha + ')';
+    ctx.stroke();
+
+    var branches = Math.random() < 0.3 ? 3 : 2;
+    for (var i = 0; i < branches; i++){
+      var newAngle = angle + rand(-0.6, 0.6);
+      var newLength = length * rand(0.62, 0.82);
+      setTimeout(function(nx, ny, na, nl, nd, nal){
+        return function(){ drawBranch(nx, ny, na, nl, nd - 1, nal); };
+      }(x2, y2, newAngle, newLength, depth - 1, alpha * 0.92), (6 - depth) * 40);
+    }
+  }
+
+  function growFrom(x, y){
+    var baseAngle = -Math.PI / 2 + rand(-0.4, 0.4);
+    drawBranch(x, y, baseAngle, rand(60, 90), 8, 0.9);
+  }
+
+  canvas.addEventListener('click', function(e){
+    growFrom(e.clientX, e.clientY);
+  });
+  canvas.addEventListener('touchstart', function(e){
+    var t = e.touches[0];
+    if (t) growFrom(t.clientX, t.clientY);
+  });
+
+  document.getElementById('resetBtn').addEventListener('click', function(){
+    ctx.clearRect(0, 0, W, H);
+  });
+
+  growFrom(window.innerWidth / 2, window.innerHeight * 0.75);
+</script>
+</body>
+</html>

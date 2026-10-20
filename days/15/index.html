@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day 15 · Wooden</title>
+<style>
+  :root{
+    --bg:#000;
+    --ink:#f5f5f7;
+    --muted:#86868b;
+    --blue:#0071e3;
+    --blue-light:#2997ff;
+    --ease:cubic-bezier(.28,0,0,1);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;}
+  body{
+    background:radial-gradient(circle at 50% 20%, #1c140e, #000 70%);
+    color:var(--ink);
+    font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+    user-select:none;
+  }
+  nav{
+    position:fixed;
+    top:0; left:0; right:0;
+    z-index:50;
+    height:48px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 20px;
+    background:rgba(0,0,0,0.6);
+    backdrop-filter:blur(20px) saturate(180%);
+    -webkit-backdrop-filter:blur(20px) saturate(180%);
+    border-bottom:1px solid rgba(255,255,255,0.08);
+  }
+  nav a.back{ color:var(--blue-light); text-decoration:none; font-size:0.85rem; font-weight:500; }
+  nav a.back:hover{ text-decoration:underline; }
+  nav .label{ color:var(--muted); font-size:0.8rem; }
+
+  .caption{
+    text-align:center;
+    margin-bottom:30px;
+    max-width:440px;
+    padding:0 20px;
+  }
+  .caption h1{
+    font-size:clamp(1.8rem, 5vw, 2.6rem);
+    font-weight:700;
+    letter-spacing:-0.02em;
+    margin:0 0 10px;
+    background:linear-gradient(180deg, #fff, #a1a1a6);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+  .caption p{ color:var(--muted); font-size:0.92rem; line-height:1.6; }
+
+  .panel{
+    width:260px;
+    height:170px;
+    border-radius:10px;
+    position:relative;
+    cursor:pointer;
+    background:
+      repeating-linear-gradient(
+        90deg,
+        #8a5a34 0px, #9c6a3e 6px, #7c4f2c 11px, #8a5a34 18px
+      );
+    box-shadow:
+      0 20px 50px rgba(0,0,0,0.6),
+      inset 0 0 40px rgba(0,0,0,0.3);
+    overflow:hidden;
+    transition:transform 0.08s var(--ease);
+  }
+  .panel::before{
+    content:"";
+    position:absolute;
+    top:30%; left:60%;
+    width:34px; height:46px;
+    border-radius:50%;
+    background:radial-gradient(circle, #5a3b22, #6e4a2b 70%, transparent 100%);
+    opacity:0.6;
+    transform:rotate(-8deg);
+  }
+  .panel::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:linear-gradient(180deg, rgba(255,255,255,0.08), transparent 40%, rgba(0,0,0,0.15));
+  }
+  .panel.knock{
+    animation:thud 0.18s var(--ease);
+  }
+  @keyframes thud{
+    0%{ transform:scale(1); }
+    40%{ transform:scale(0.97) translateY(2px); }
+    100%{ transform:scale(1); }
+  }
+
+  .msg{
+    margin-top:28px;
+    font-size:0.85rem;
+    color:var(--muted);
+    text-align:center;
+    max-width:380px;
+    min-height:20px;
+  }
+  .tag{
+    display:inline-block;
+    margin-top:12px;
+    font-size:0.78rem;
+    font-weight:600;
+    color:#fff;
+    background:var(--blue);
+    padding:8px 18px;
+    border-radius:999px;
+  }
+</style>
+</head>
+<body>
+<nav>
+  <a class="back" href="../../">‹ Weird October</a>
+  <span class="label">Day 15 · Wooden</span>
+</nav>
+
+<div class="caption">
+  <h1>Knock on wood.</h1>
+  <p>Click the panel. It's superstition, not science, but it can't hurt.</p>
+</div>
+
+<div class="panel" id="panel"></div>
+<div class="msg" id="msg">0 knocks</div>
+<span class="tag">Day 15 · Wooden</span>
+
+<script>
+  var panel = document.getElementById('panel');
+  var msg = document.getElementById('msg');
+  var knocks = 0;
+
+  var lines = [
+    "1 knock. good start.",
+    "2 knocks. just to be safe.",
+    "3 knocks — the traditional amount.",
+    "4 knocks. you're covered either way.",
+    "5 knocks. this is probably enough.",
+    "6 knocks. bad luck wouldn't dare.",
+    "7 knocks. okay, you're fine. you're totally fine."
+  ];
+
+  panel.addEventListener('click', function(){
+    knocks++;
+    panel.classList.remove('knock');
+    void panel.offsetWidth;
+    panel.classList.add('knock');
+    msg.textContent = lines[Math.min(knocks, lines.length) - 1] || (knocks + ' knocks. still here, still wooden.');
+  });
+</script>
+</body>
+</html>

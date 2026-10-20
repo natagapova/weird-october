@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day 18 · Geometric</title>
+<style>
+  :root{
+    --bg:#000;
+    --ink:#f5f5f7;
+    --muted:#86868b;
+    --blue:#0071e3;
+    --blue-light:#2997ff;
+    --ease:cubic-bezier(.28,0,0,1);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;}
+  body{
+    background:#000;
+    color:var(--ink);
+    font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    height:100vh;
+    overflow:hidden;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:crosshair;
+    position:relative;
+  }
+  nav{
+    position:fixed;
+    top:0; left:0; right:0;
+    z-index:50;
+    height:48px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 20px;
+    background:rgba(0,0,0,0.6);
+    backdrop-filter:blur(20px) saturate(180%);
+    -webkit-backdrop-filter:blur(20px) saturate(180%);
+    border-bottom:1px solid rgba(255,255,255,0.08);
+  }
+  nav a.back{ color:var(--blue-light); text-decoration:none; font-size:0.85rem; font-weight:500; }
+  nav a.back:hover{ text-decoration:underline; }
+  nav .label{ color:var(--muted); font-size:0.8rem; }
+
+  canvas{ position:absolute; inset:0; }
+
+  .caption{
+    position:relative;
+    z-index:2;
+    text-align:center;
+    pointer-events:none;
+    max-width:460px;
+    padding:0 24px;
+  }
+  .caption h1{
+    font-size:clamp(1.8rem, 6vw, 2.8rem);
+    font-weight:700;
+    letter-spacing:-0.02em;
+    margin:0 0 12px;
+    background:linear-gradient(180deg, #fff, #a1a1a6);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+  .caption p{ color:var(--muted); font-size:0.95rem; line-height:1.6; }
+  .tag{
+    display:inline-block;
+    margin-top:18px;
+    font-size:0.78rem;
+    font-weight:600;
+    color:#fff;
+    background:var(--blue);
+    padding:8px 18px;
+    border-radius:999px;
+  }
+  .reset{
+    position:absolute;
+    top:58px;
+    right:16px;
+    z-index:3;
+    font-size:0.75rem;
+    color:var(--blue-light);
+    background:rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.12);
+    padding:6px 14px;
+    border-radius:999px;
+    cursor:pointer;
+    font-family:inherit;
+  }
+  .reset:hover{ background:rgba(0,113,227,0.2); }
+</style>
+</head>
+<body>
+<nav>
+  <a class="back" href="../../">‹ Weird October</a>
+  <span class="label">Day 18 · Geometric</span>
+</nav>
+<button class="reset" id="resetBtn">clear</button>
+<canvas id="c"></canvas>
+<div class="caption">
+  <h1>Move your cursor.</h1>
+  <p>Everything you draw is mirrored eight ways around the center — one gesture, perfect symmetry.</p>
+  <span class="tag">Day 18 · Geometric</span>
+</div>
+
+<script>
+  var canvas = document.getElementById('c');
+  var ctx = canvas.getContext('2d');
+  var W, H, cx, cy;
+  var SIDES = 8;
+
+  function resize(){
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+    cx = W / 2; cy = H / 2;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, W, H);
+
+  var colors = ['#2997ff', '#0071e3', '#ffffff', '#30d158', '#ff9f0a'];
+  var lastX = null, lastY = null;
+  var colorIndex = 0;
+
+  function drawMirrored(x1, y1, x2, y2, color){
+    var dx1 = x1 - cx, dy1 = y1 - cy;
+    var dx2 = x2 - cx, dy2 = y2 - cy;
+
+    for (var i = 0; i < SIDES; i++){
+      var angle = (Math.PI * 2 / SIDES) * i;
+      var cosA = Math.cos(angle), sinA = Math.sin(angle);
+
+      [1, -1].forEach(function(mirror){
+        var mx1 = dx1 * mirror, my1 = dy1;
+        var mx2 = dx2 * mirror, my2 = dy2;
+
+        var rx1 = mx1 * cosA - my1 * sinA;
+        var ry1 = mx1 * sinA + my1 * cosA;
+        var rx2 = mx2 * cosA - my2 * sinA;
+        var ry2 = mx2 * sinA + my2 * cosA;
+
+        ctx.beginPath();
+        ctx.moveTo(cx + rx1, cy + ry1);
+        ctx.lineTo(cx + rx2, cy + ry2);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+      });
+    }
+  }
+
+  function handleMove(x, y){
+    if (lastX !== null){
+      var dist = Math.hypot(x - lastX, y - lastY);
+      if (dist > 2){
+        drawMirrored(lastX, lastY, x, y, colors[colorIndex % colors.length]);
+      }
+    }
+    lastX = x; lastY = y;
+  }
+
+  canvas.addEventListener('mousemove', function(e){
+    handleMove(e.clientX, e.clientY);
+  });
+  canvas.addEventListener('mousedown', function(){
+    colorIndex++;
+  });
+  canvas.addEventListener('mouseleave', function(){
+    lastX = null; lastY = null;
+  });
+  canvas.addEventListener('touchmove', function(e){
+    var t = e.touches[0];
+    if (t) handleMove(t.clientX, t.clientY);
+  }, { passive:true });
+  canvas.addEventListener('touchend', function(){
+    lastX = null; lastY = null;
+    colorIndex++;
+  });
+
+  document.getElementById('resetBtn').addEventListener('click', function(){
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, W, H);
+  });
+</script>
+</body>
+</html>
