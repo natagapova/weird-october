@@ -37,8 +37,8 @@ challenge to make one small, weird website per day.
 | 19  | Distorted     | ✅ |
 | 20  | Undefined     | ✅ |
 | 21  | Illusion      | ✅ |
-| 22  | Skeletons     | ⬜ |
-| 23  | Incognito     | ⬜ |
+| 22  | Skeletons     | ✅ |
+| 23  | Incognito     | ✅ |
 | 24  | Collage       | ⬜ |
 | 25  | Ascending     | ⬜ |
 | 26  | Net           | ⬜ |
