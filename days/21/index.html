@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day 21 · Illusion</title>
+<style>
+  :root{
+    --bg:#000;
+    --ink:#f5f5f7;
+    --muted:#86868b;
+    --blue:#0071e3;
+    --blue-light:#2997ff;
+    --ease:cubic-bezier(.28,0,0,1);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;}
+  body{
+    background:radial-gradient(circle at 50% 20%, #14151c, #000 70%);
+    color:var(--ink);
+    font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+    padding:90px 16px 40px;
+    user-select:none;
+  }
+  nav{
+    position:fixed;
+    top:0; left:0; right:0;
+    z-index:50;
+    height:48px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 20px;
+    background:rgba(0,0,0,0.6);
+    backdrop-filter:blur(20px) saturate(180%);
+    -webkit-backdrop-filter:blur(20px) saturate(180%);
+    border-bottom:1px solid rgba(255,255,255,0.08);
+  }
+  nav a.back{ color:var(--blue-light); text-decoration:none; font-size:0.85rem; font-weight:500; }
+  nav a.back:hover{ text-decoration:underline; }
+  nav .label{ color:var(--muted); font-size:0.8rem; }
+
+  .caption{
+    text-align:center;
+    margin-bottom:26px;
+    max-width:460px;
+  }
+  .caption h1{
+    font-size:clamp(1.8rem, 5vw, 2.6rem);
+    font-weight:700;
+    letter-spacing:-0.02em;
+    margin:0 0 10px;
+    background:linear-gradient(180deg, #fff, #a1a1a6);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+  .caption p{ color:var(--muted); font-size:0.92rem; line-height:1.6; }
+
+  .board{
+    position:relative;
+    display:grid;
+    grid-template-columns:repeat(8, 32px);
+    grid-template-rows:repeat(6, 32px);
+    border-radius:10px;
+    overflow:hidden;
+    box-shadow:0 20px 50px rgba(0,0,0,0.5);
+  }
+  .cell{ width:32px; height:32px; }
+  .light{ background:#e4e4e4; }
+  .dark{ background:#4a4a4a; }
+  .light.shadowed{ background:#999999; }
+  .dark.shadowed{ background:#2a2a2a; }
+
+  .mark{
+    position:relative;
+    background:#7e7e7e !important;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:0.6rem;
+    font-weight:700;
+    color:rgba(255,255,255,0.0);
+  }
+  .mark span{
+    color:rgba(255,255,255,0.65);
+    font-family:-apple-system, sans-serif;
+  }
+
+  .bridge{
+    position:absolute;
+    height:32px;
+    background:#7e7e7e;
+    top:0;
+    left:0;
+    width:0;
+    transition:width 0.9s var(--ease);
+    z-index:5;
+    box-shadow:0 0 0 1px rgba(255,255,255,0.15);
+  }
+
+  .proveBtn{
+    margin-top:24px;
+    font-family:inherit;
+    font-size:0.85rem;
+    font-weight:600;
+    color:#fff;
+    background:var(--blue);
+    border:none;
+    padding:10px 20px;
+    border-radius:999px;
+    cursor:pointer;
+  }
+  .proveBtn:active{ transform:scale(0.97); }
+
+  .msg{
+    margin-top:16px;
+    font-size:0.85rem;
+    color:var(--muted);
+    text-align:center;
+    max-width:380px;
+    min-height:20px;
+  }
+  .tag{
+    display:inline-block;
+    margin-top:12px;
+    font-size:0.78rem;
+    font-weight:600;
+    color:#fff;
+    background:var(--blue);
+    padding:8px 18px;
+    border-radius:999px;
+  }
+</style>
+</head>
+<body>
+<nav>
+  <a class="back" href="../../">‹ Weird October</a>
+  <span class="label">Day 21 · Illusion</span>
+</nav>
+
+<div class="caption">
+  <h1>A and B are the same color.</h1>
+  <p>Look again if you need to — your eyes are lying to you, not the page.</p>
+</div>
+
+<div class="board" id="board"></div>
+<button class="proveBtn" id="proveBtn">Prove it</button>
+<div class="msg" id="msg">&nbsp;</div>
+<span class="tag">Day 21 · Illusion</span>
+
+<script>
+  var board = document.getElementById('board');
+  var COLS = 8, ROWS = 6;
+  var A_ROW = 2, A_COL = 1;
+  var B_ROW = 2, B_COL = 6;
+
+  for (var r = 0; r < ROWS; r++){
+    for (var c = 0; c < COLS; c++){
+      var cell = document.createElement('div');
+      var isLight = (r + c) % 2 === 0;
+      var isShadowZone = c >= 4;
+      cell.className = 'cell ' + (isLight ? 'light' : 'dark') + (isShadowZone ? ' shadowed' : '');
+
+      if (r === A_ROW && c === A_COL){
+        cell.className = 'cell mark';
+        var la = document.createElement('span'); la.textContent = 'A';
+        cell.appendChild(la);
+      }
+      if (r === B_ROW && c === B_COL){
+        cell.className = 'cell mark';
+        var lb = document.createElement('span'); lb.textContent = 'B';
+        cell.appendChild(lb);
+      }
+      board.appendChild(cell);
+    }
+  }
+
+  var bridge = document.createElement('div');
+  bridge.className = 'bridge';
+  bridge.style.top = (A_ROW * 32) + 'px';
+  bridge.style.left = (A_COL * 32) + 'px';
+  board.appendChild(bridge);
+
+  var proveBtn = document.getElementById('proveBtn');
+  var msg = document.getElementById('msg');
+  var proved = false;
+
+  proveBtn.addEventListener('click', function(){
+    if (proved){
+      bridge.style.width = '0px';
+      proved = false;
+      proveBtn.textContent = 'Prove it';
+      msg.textContent = '';
+      return;
+    }
+    bridge.style.width = ((B_COL - A_COL + 1) * 32) + 'px';
+    proved = true;
+    proveBtn.textContent = 'Hide the proof';
+    msg.textContent = 'Same strip, same color, the whole way across. The "shadow" is just darker tiles around B — B itself never changed.';
+  });
+</script>
+</body>
+</html>
